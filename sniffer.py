@@ -38,6 +38,15 @@ def main():
             print(TAB_2 + 'Version: {}, Header Length: {}, TTL: {},'.format(ipv4.version, ipv4.header_length, ipv4.ttl))
             print(TAB_2 + 'Protocol: {}, Source: {}, Target: {}'.format(ipv4.proto, ipv4.src, ipv4.target))
 
+        # ARP - Desvio Implementado
+        elif eth.proto == 1544:
+            print(TAB_1 + 'ARP Packet (Interpretador Avançado):')
+            arp_info = arp_decoder.unpack_arp(eth.data)
+            if arp_info:
+                print(TAB_2 + 'OpCode: {} | Protocol: {}'.format(arp_info['opcode'], arp_info['proto_type']))
+                print(TAB_2 + 'Sender: {} ({})'.format(arp_info['src_mac'], arp_info['src_ip']))
+                print(TAB_2 + 'Target: {} ({})'.format(arp_info['dest_mac'], arp_info['dest_ip']))
+
             # ICMP
             if ipv4.proto == 1:
                 icmp = ICMP(ipv4.data)
