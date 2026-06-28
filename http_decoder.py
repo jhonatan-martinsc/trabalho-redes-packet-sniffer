@@ -1,5 +1,6 @@
 def unpack_http(data):
     try:
+        # Decodifica bytes para string (ignora erros de caracteres inválidos)
         decoded_data = data.decode('utf-8', errors='ignore')
         lines = decoded_data.split('\n')
         
@@ -7,6 +8,7 @@ def unpack_http(data):
         
         for line in lines:
             line = line.strip()
+            # Identifica os metadados principais do cabeçalho HTTP
             if line.startswith(('GET', 'POST', 'PUT', 'DELETE')):
                 http_info['method'] = line
             elif line.startswith('Host:'):

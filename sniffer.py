@@ -40,7 +40,7 @@ def main():
             print(TAB_2 + 'Version: {}, Header Length: {}, TTL: {},'.format(ipv4.version, ipv4.header_length, ipv4.ttl))
             print(TAB_2 + 'Protocol: {}, Source: {}, Target: {}'.format(ipv4.proto, ipv4.src, ipv4.target))
 
-            # ICMP (Agora alinhado corretamente DENTRO do IPv4)
+            # ICMP
             if ipv4.proto == 1:
                 icmp = ICMP(ipv4.data)
                 print(TAB_1 + 'ICMP Packet:')
@@ -59,7 +59,7 @@ def main():
                 print(TAB_3 + 'RST: {}, SYN: {}, FIN:{}'.format(tcp.flag_rst, tcp.flag_syn, tcp.flag_fin))
 
                 if len(tcp.data) > 0:
-                    # HTTP - Desvio Implementado (Fase 3)
+                    # HTTP (Nova Implementação)
                     if tcp.src_port == 80 or tcp.dest_port == 80:
                         print(TAB_2 + 'HTTP Data (Interpretador Avançado):')
                         http_meta = http_decoder.unpack_http(tcp.data)
@@ -79,7 +79,7 @@ def main():
                 print(TAB_1 + 'UDP Segment:')
                 print(TAB_2 + 'Source Port: {}, Destination Port: {}, Length: {}'.format(udp.src_port, udp.dest_port, udp.size))
                 
-                # DNS - Desvio Implementado (Fase 2)
+                # DNS - (Nova Implementação)
                 if udp.src_port == 53 or udp.dest_port == 53:
                     print(TAB_2 + 'DNS Data (Interpretador Avançado):')
                     dns_info = dns_decoder.unpack_dns(udp.data)
@@ -93,7 +93,7 @@ def main():
                 print(TAB_1 + 'Other IPv4 Data:')
                 print(format_multi_line(DATA_TAB_2, ipv4.data))
 
-        # ARP - Desvio Implementado (Fase 1 - Agora alinhado no mesmo nível do IPv4)
+        # ARP - (Nova Implementação)
         elif eth.proto == 1544:
             print(TAB_1 + 'ARP Packet (Interpretador Avançado):')
             arp_info = arp_decoder.unpack_arp(eth.data)
