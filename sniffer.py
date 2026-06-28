@@ -1,6 +1,8 @@
 import socket
 from general import *
 import arp_decoder
+import dns_decoder
+import http_decoder
 from networking.ethernet import Ethernet
 from networking.ipv4 import IPv4
 from networking.icmp import ICMP
@@ -18,7 +20,6 @@ DATA_TAB_1 = '\t   '
 DATA_TAB_2 = '\t\t   '
 DATA_TAB_3 = '\t\t\t   '
 DATA_TAB_4 = '\t\t\t\t   '
-
 
 def main():
     pcap = Pcap('capture.pcap')
@@ -39,16 +40,7 @@ def main():
             print(TAB_2 + 'Version: {}, Header Length: {}, TTL: {},'.format(ipv4.version, ipv4.header_length, ipv4.ttl))
             print(TAB_2 + 'Protocol: {}, Source: {}, Target: {}'.format(ipv4.proto, ipv4.src, ipv4.target))
 
-        # ARP - Desvio Implementado
-        elif eth.proto == 1544:
-            print(TAB_1 + 'ARP Packet (Interpretador Avançado):')
-            arp_info = arp_decoder.unpack_arp(eth.data)
-            if arp_info:
-                print(TAB_2 + 'OpCode: {} | Protocol: {}'.format(arp_info['opcode'], arp_info['proto_type']))
-                print(TAB_2 + 'Sender: {} ({})'.format(arp_info['src_mac'], arp_info['src_ip']))
-                print(TAB_2 + 'Target: {} ({})'.format(arp_info['dest_mac'], arp_info['dest_ip']))
-
-            # ICMP
+            # ICMP (Agora alinhado corretamente DENTRO do IPv4)
             if ipv4.proto == 1:
                 icmp = ICMP(ipv4.data)
                 print(TAB_1 + 'ICMP Packet:')
@@ -67,16 +59,15 @@ def main():
                 print(TAB_3 + 'RST: {}, SYN: {}, FIN:{}'.format(tcp.flag_rst, tcp.flag_syn, tcp.flag_fin))
 
                 if len(tcp.data) > 0:
-
-                    # HTTP
+                    # HTTP - Desvio Implementado (Fase 3)
                     if tcp.src_port == 80 or tcp.dest_port == 80:
-                        print(TAB_2 + 'HTTP Data:')
-                        try:
-                            http = HTTP(tcp.data)
-                            http_info = str(http.data).split('\n')
-                            for line in http_info:
-                                print(DATA_TAB_3 + str(line))
-                        except:
+                        print(TAB_2 + 'HTTP Data (Interpretador Avançado):')
+                        http_meta = http_decoder.unpack_http(tcp.data)
+                        if http_meta and http_meta['method']:
+                            print(TAB_3 + 'Method: {}'.format(http_meta['method']))
+                            print(TAB_3 + 'Host: {}'.format(http_meta['host']))
+                            print(TAB_3 + 'User-Agent: {}'.format(http_meta['user_agent']))
+                        else:
                             print(format_multi_line(DATA_TAB_3, tcp.data))
                     else:
                         print(TAB_2 + 'TCP Data:')
@@ -87,11 +78,29 @@ def main():
                 udp = UDP(ipv4.data)
                 print(TAB_1 + 'UDP Segment:')
                 print(TAB_2 + 'Source Port: {}, Destination Port: {}, Length: {}'.format(udp.src_port, udp.dest_port, udp.size))
+                
+                # DNS - Desvio Implementado (Fase 2)
+                if udp.src_port == 53 or udp.dest_port == 53:
+                    print(TAB_2 + 'DNS Data (Interpretador Avançado):')
+                    dns_info = dns_decoder.unpack_dns(udp.data)
+                    if dns_info:
+                        print(TAB_3 + 'Transaction ID: {}'.format(dns_info['transaction_id']))
+                        print(TAB_3 + 'Flags: {}'.format(dns_info['flags']))
+                        print(TAB_3 + 'Query Name: {}'.format(dns_info['query_name']))
 
             # Other IPv4
             else:
                 print(TAB_1 + 'Other IPv4 Data:')
                 print(format_multi_line(DATA_TAB_2, ipv4.data))
+
+        # ARP - Desvio Implementado (Fase 1 - Agora alinhado no mesmo nível do IPv4)
+        elif eth.proto == 1544:
+            print(TAB_1 + 'ARP Packet (Interpretador Avançado):')
+            arp_info = arp_decoder.unpack_arp(eth.data)
+            if arp_info:
+                print(TAB_2 + 'OpCode: {} | Protocol: {}'.format(arp_info['opcode'], arp_info['proto_type']))
+                print(TAB_2 + 'Sender: {} ({})'.format(arp_info['src_mac'], arp_info['src_ip']))
+                print(TAB_2 + 'Target: {} ({})'.format(arp_info['dest_mac'], arp_info['dest_ip']))
 
         else:
             print('Ethernet Data:')
@@ -99,5 +108,5 @@ def main():
 
     pcap.close()
 
-
-main()
+if __name__ == '__main__':
+    main()
